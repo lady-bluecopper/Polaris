@@ -1,2 +1,2 @@
 # Polaris
-Null models for Labeled Multi-graphs
+Null Models for Labeled Multi-graphs
