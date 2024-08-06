@@ -1,6 +1,6 @@
 # Polaris
 
-![Polaris](.img/panel.jpg)
+![Polaris](img/panel.jpg)
 
 ## Overview
 
