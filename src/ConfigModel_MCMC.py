@@ -6,7 +6,6 @@ import random
 import sys
 sys.path.insert(1,'../')
 import src.utils as ut # type: ignore
-from src.MCMC_LWS_AD import MCMC_LWS # type: ignore
 
 
 def get_graph_parallel_chains(sampler,
@@ -89,8 +88,11 @@ def sample_graph(inp):
     A = ut.copy_weight_dict(sampler.A)
     edges = ut.copy_edge_list(sampler.edge_list)
     start = time.time()
-    for _ in range(swaps):
-        sampler.MCMC_step(A, edges, swapped)
+    it = 0
+    while it < swaps:
+        P = sampler.MCMC_step(A, edges, swapped)
+        if P != -2:
+            it += 1
     end = time.time() - start
 
     # SANITY CHECK        
@@ -106,62 +108,6 @@ def sample_graph(inp):
     # print(f'SAME DEGREE SEQUENCE 2={same_degs}')
     # print(f'SAME JLM 2={same_jlm}')
     return edges, end
-
-
-def simple_progress_chain(inp):
-    '''
-    Procedure used for code profiling purposes.
-
-    INPUT
-    ======
-    num_swaps_needed (int): number of moves in the Markov graph to perform.
-    last_A (dict): edge weight dictionary of the current state.
-    last_edge_list(list): edge list. 
-    increment (int): running time will be saved every increment steps in the Markov graph.
-    seed (int): for reproducibility.
-    idx (int): id of the chain.
-    sampler (object): sampler to use to move in the state space.
-    sampler_name (str): name of the sampler.
-    '''
-    num_swaps_needed = inp[0]
-    last_A = inp[1]
-    last_edge_list = inp[2]
-    increment = inp[3]
-    seed = inp[4]
-    idx = inp[5]
-    sampler = inp[6]
-    sampler_name = inp[7]
-    
-    random.seed(idx+seed)
-    counter = 0
-    times = dict()
-    actual_moves = 0
-    swaps = 0
-    
-    start = time.time()
-    swapped = [-1, -1, -1, -1]
-    while swaps < num_swaps_needed:
-        P = sampler.MCMC_step(last_A, last_edge_list, swapped)
-        # A swap was performed
-        if swapped[0] != -1:
-            actual_moves += 1
-            swapped[0] = -1
-        swaps += 1
-        if counter % increment == 0:
-            times[swaps] = time.time() - start
-            # gc.collect()
-        counter += 1
-    
-    all_stats = dict()
-    all_stats['Time (s)'] = time.time() - start
-    all_stats['Acceptance Ratio'] = actual_moves / num_swaps_needed
-    all_stats['Number of Swaps'] = num_swaps_needed
-    all_stats['Num Edges'] = sampler.m
-    all_stats['Chain'] = idx
-    all_stats['Time at Iter (s)'] = times
-    all_stats['Method'] = sampler_name
-
-    return last_A, last_edge_list, all_stats
 
 
 def progress_chain(inp):
@@ -200,6 +146,7 @@ def progress_chain(inp):
     step_times = defaultdict(int)
     times = dict()
     actual_moves = 0
+    swaps = 0
     swapped = [-1, -1, -1, -1]
     
     last_A = ut.copy_weight_dict(sampler.A)
