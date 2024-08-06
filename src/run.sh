@@ -23,7 +23,7 @@ actual='False'
 # max number of concurrent threads
 num_workers=10
 
-# 0 = run sampling, 1 = run convergence, 2 = run label experiment
+# 0 = run sampling, 1 = run convergence
 exper=0
 
 if [ "$exper" -eq 0 ]; then
@@ -43,13 +43,5 @@ if [ "$exper" -eq 1 ]; then
             echo "---- `date`"
             python run_convergence.py --seed $seed --base_path ${base_path} --data_dir ${data_dir} --graph_name $db --algorithm $al --perc $perc --D $D --mul_fact ${mul_fact} --num_workers ${num_workers}
         done
-    done
-fi
-
-if [ "$exper" -eq 2 ]; then
-    for al in "${algos[@]}"; do
-        echo "Running LABEL EXPERIMENT for $al"
-        echo "---- `date`"
-        python run_label_scalability.py --seed $seed --num_samples $S --label_list 2,4,8,11 --base_path ${base_path} --data_dir ${data_dir} --graph_name walmart-trips --num_workers ${num_workers} --algorithm $al --perc $perc
     done
 fi
