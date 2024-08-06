@@ -85,7 +85,7 @@ def run_convergence(edges: list[tuple[int,int]],
             row = [num_swaps,
                    r_burn_in, # current degree assortativity
                    denominator,
-                   int(sampler.m * perc),
+                   max(int(sampler.m * perc), 1),
                    seed,
                    idx,
                    sampler,

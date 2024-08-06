@@ -41,7 +41,7 @@ if [ "$exper" -eq 1 ]; then
         for al in "${algos[@]}"; do
             echo "Running CONVERGENCE for $db and $al"
             echo "---- `date`"
-            python run.py --seed $seed --base_path ${base_path} --data_dir ${data_dir} --graph_name $db --algorithm $al --perc $perc --D $D --mul_fact ${mul_fact} --num_workers ${num_workers}
+            python run_convergence.py --seed $seed --base_path ${base_path} --data_dir ${data_dir} --graph_name $db --algorithm $al --perc $perc --D $D --mul_fact ${mul_fact} --num_workers ${num_workers}
         done
     done
 fi
