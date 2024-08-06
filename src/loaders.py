@@ -9,11 +9,11 @@ def read_arguments():
     parser.add_argument('--base_path', type=str, default='.', help='Directory with the data and out directory.')
     parser.add_argument('--data_dir', type=str, default='data', help='Name of the directory with the datasets.')
     parser.add_argument('--graph_name', type=str, help='Name of the graph to load (without extension).')
-    parser.add_argument('--algorithm', default='LA', choices=['LA', 'LW', 'CM', 'LWS'], help='Sampler.')
+    parser.add_argument('--algorithm', type=str, default='LA', choices=['LA', 'LW', 'CM'], help='Sampler name.')
     parser.add_argument('--D', type=int, default=10, help='Number of parallel chain to test convergence.')
     parser.add_argument('--mul_fact', default=100, type=int, help='Multiplying factor M to get the number of steps: M * num_edges.')
     parser.add_argument('--num_swaps', type=int, default=-1, help='Number of steps before returning the current state.')
-    parser.add_argument('--actual_swaps', type=bool, default=False, help='If the number of steps to perform indicates the number of actual moves in the Markov chain.')
+    parser.add_argument('--actual_swaps', type=str, default='False', choices=['True', 'False'], help='If the number of steps to perform indicates the number of actual moves in the Markov chain.')
     parser.add_argument('--label_list', type=str, help='List of number of labels for the scalability experiment. Comma separated list.')
     parser.add_argument('--perc', type=float, default=0.05, help='Multiplying factor P to get the interval between two consecutive measurements of time elapsed: P * num_edges.')
 

@@ -57,7 +57,10 @@ if __name__ == '__main__':
     num_graphs = args['num_samples']
     sampl_name = args['algorithm']
     base_seed = args['seed']
-    actual = args['actual_swaps']
+    if args['actual_swaps'] == 'True':
+        actual = True
+    else:
+        actual = False
     
     data_dir = f'{base_path}/{data_dir}'
     out_dir = f'{base_path}/out'
