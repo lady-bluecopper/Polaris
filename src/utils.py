@@ -3,8 +3,7 @@ from collections import defaultdict
 import math
 from scipy import stats
 from tqdm.contrib.concurrent import process_map
-from orderedstructs import SkipList
-import orjson
+# from orderedstructs import SkipList
 
 
 def check_degree_sequences(deg1, deg2):
@@ -123,13 +122,6 @@ def dump_edge_list(file_path, obj):
     with open(file_path, 'w') as out_f:
         for e in obj:
             out_f.write(f'{e[0]}\t{e[1]}\n')
-
-
-def save_stats(stats, out_name):
-    # stats is an array of dicts
-    with open(out_name, 'wb') as out_f:
-        for stats_dict in stats:
-            out_f.write(orjson.dumps(stats_dict) + b'\n')
             
             
 def copy_edge_list(edge_list):
@@ -173,17 +165,17 @@ def copy_label_dicts(lab_match_edges: dict[int, np.ndarray],
     return new_lab_match_edges, new_lab_match_emap, new_lab_match_m
 
 
-def copy_edge_skip_lists(edge_sl_dict):
-    '''
-    Creates a deep copy of edge_sl_dict.
-    '''
-    copy_e_sl_dict = dict()
-    for k in edge_sl_dict:
-        copy_e_sl_dict[k] = SkipList(object)
-        for i in range(edge_sl_dict[k].size()):
-            u, v = edge_sl_dict[k].at(i)
-            copy_e_sl_dict[k].insert((u, v))
-    return copy_e_sl_dict
+# def copy_edge_skip_lists(edge_sl_dict):
+#     '''
+#     Creates a deep copy of edge_sl_dict.
+#     '''
+#     copy_e_sl_dict = dict()
+#     for k in edge_sl_dict:
+#         copy_e_sl_dict[k] = SkipList(object)
+#         for i in range(edge_sl_dict[k].size()):
+#             u, v = edge_sl_dict[k].at(i)
+#             copy_e_sl_dict[k].insert((u, v))
+#     return copy_e_sl_dict
 
 
 def convert_edgelist_to_dictionary(edgeList, A):

@@ -1,4 +1,3 @@
-import networkx as nx
 import sys
 import os
 sys.path.insert(1,'../')
@@ -17,9 +16,11 @@ def run_sampler(edges: list[tuple[int,int]],
                 num_graphs: int,
                 swaps: int,
                 algo: str, 
-                max_workers: int,
-                actual_swaps: bool,
-                seed: int):
+                out_dir: str,
+                graph_name: str,
+                max_workers: int=10,
+                actual_swaps: bool=False,
+                seed: int=0):
     '''
     INPUT
     ======
@@ -29,12 +30,13 @@ def run_sampler(edges: list[tuple[int,int]],
     num_graphs (int): number of random graphs to generate.
     swaps (int): number of iterations to perform before returning the current state. 
     algo (str): name of the sampler to use to move in the state space.
+    out_dir (str): where the graph should be stored.
+    graph_name (str): name of the observed graph.
     max_workers (int): max number of concurrent threads.
     actual_swaps (bool): if True, an iteration is counted only if the
                          transition to the next state was accepted.
     seed (int): for reproducibility.
     '''
-
     if algo == 'LA':
         sampler = la.MCMC_LA(edges, degrees, node_labels)
     elif algo == 'LW':
@@ -44,7 +46,15 @@ def run_sampler(edges: list[tuple[int,int]],
     else:
         sys.exit(f'{algo} not supported.')
         
-    return mcmc.get_graph_parallel_chains(sampler, num_graphs, swaps, max_workers, actual_swaps, seed) 
+    mcmc.get_graph_parallel_chains(sampler, 
+                                   out_dir,
+                                   graph_name,
+                                   algo,
+                                   num_graphs, 
+                                   swaps, 
+                                   max_workers, 
+                                   actual_swaps, 
+                                   seed) 
     
 
 if __name__ == '__main__':
@@ -68,30 +78,24 @@ if __name__ == '__main__':
     
     file_path = f'{data_dir}/{graph_name}.tsv'
     edges = ld.read_tsv_graph(file_path)
-    G = nx.MultiGraph()
-    G.add_edges_from(edges)
-    degrees = dict(G.degree()) # type: ignore
+    degrees = ut.compute_degree_sequence_from_list(edges)
     
     lab_path = f'{data_dir}/{graph_name}_labels.tsv'
-    node_labels, inner_outer_labels = ld.read_node_labels(lab_path, G.nodes())
-
+    node_labels, inner_outer_labels = ld.read_node_labels(lab_path, degrees.keys())
+    
     if args['num_swaps'] < 0:
         swaps = int(len(edges) * np.log(len(edges)))    
     else:
         swaps = args['num_swaps']
         
-    graphs = run_sampler(edges=edges,
-                         degrees=degrees, # type: ignore
-                         node_labels=node_labels,
-                         num_graphs=num_graphs,
-                         swaps=swaps,
-                         algo=sampl_name,
-                         max_workers=min(num_graphs, args['num_workers']),
-                         actual_swaps=actual,
-                         seed=base_seed)
-    # save graphs
-    for seed, out in enumerate(graphs):
-        g = out[0]
-        time = out[1]
-        fpath = f'{out_dir}/{graph_name}__sampler_{sampl_name}__swaps_{swaps}__runtime_{time}__seed_{seed}__actualswaps_{actual}.tsv'
-        ut.dump_edge_list(fpath, g)
+    run_sampler(edges=edges,
+                degrees=degrees, # type: ignore
+                node_labels=node_labels,
+                num_graphs=num_graphs,
+                swaps=swaps,
+                algo=sampl_name,
+                out_dir=out_dir,
+                graph_name=graph_name,
+                max_workers=min(num_graphs, args['num_workers']),
+                actual_swaps=actual,
+                seed=base_seed)

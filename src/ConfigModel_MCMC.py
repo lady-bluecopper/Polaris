@@ -9,6 +9,9 @@ import src.utils as ut # type: ignore
 
 
 def get_graph_parallel_chains(sampler,
+                              out_dir: str, 
+                              graph_name: str, 
+                              samp_name: str,
                               count: int=1,
                               swaps: int=-1,
                               max_workers: int=4,
@@ -18,6 +21,9 @@ def get_graph_parallel_chains(sampler,
         INPUT
         ======
         sampler: which algorithm use to move in the Markov graph.
+        out_dir (str): where the graph should be stored.
+        graph_name (str): name of the observed graph.
+        samp_name (str): name of the sampler to use to sample the graph.
         count (int): number of graphs to sample from the Configuration model.
         swaps (int): number of swaps before returning the current state.
         max_workers (int): number of concurrent threads.
@@ -33,7 +39,7 @@ def get_graph_parallel_chains(sampler,
             swaps = sampler.m * np.log(sampler.m)
         inputs = []
         for i in range(count):
-            inputs.append([sampler, seed + i, swaps])
+            inputs.append([sampler, seed + i, swaps, out_dir, graph_name, samp_name])
         if actual_swaps:
             return process_map(sample_graph_exact_swaps, inputs, max_workers=max_workers)
         return process_map(sample_graph, inputs, max_workers=max_workers)
@@ -53,6 +59,9 @@ def sample_graph_exact_swaps(inp):
     sampler = inp[0]
     seed = inp[1]
     swaps = inp[2]
+    out_dir = inp[3]
+    graph_name = inp[4]
+    sampl_name = inp[5]
     
     random.seed(seed)
     swapped = [-1, -1, -1, -1]
@@ -67,7 +76,10 @@ def sample_graph_exact_swaps(inp):
             actual_swaps += 1
             swapped[0] = -1
     end = time.time() - start
-    return edges, end
+    
+    
+    fpath = f'{out_dir}/{graph_name}__sampler_{sampl_name}__swaps_{swaps}__runtime_{end}__seed_{seed}__actualswaps_True.tsv'
+    ut.dump_edge_list(fpath, edges)
 
 
 def sample_graph(inp):
@@ -81,6 +93,9 @@ def sample_graph(inp):
     sampler = inp[0]
     seed = inp[1]
     swaps = inp[2]
+    out_dir = inp[3]
+    graph_name = inp[4]
+    sampl_name = inp[5]
     
     random.seed(seed)
     swapped = [-1, -1, -1, -1]
@@ -107,7 +122,9 @@ def sample_graph(inp):
     # same_jlm = ut.check_JLM(jlm_g1, jlm_g2)
     # print(f'SAME DEGREE SEQUENCE 2={same_degs}')
     # print(f'SAME JLM 2={same_jlm}')
-    return edges, end
+    
+    fpath = f'{out_dir}/{graph_name}__sampler_{sampl_name}__swaps_{swaps}__runtime_{end}__seed_{seed}__actualswaps_False.tsv'
+    ut.dump_edge_list(fpath, edges)
 
 
 def progress_chain(inp):
@@ -139,12 +156,11 @@ def progress_chain(inp):
     # degree assortativity values
     assortativities = []
     # Manhattan distance values
-    perturbations = []
     probs = dict()
     probs['Accepted'] = defaultdict(int)
     probs['Rejected'] = defaultdict(int)
     step_times = defaultdict(int)
-    times = dict()
+    times = []
     actual_moves = 0
     swaps = 0
     swapped = [-1, -1, -1, -1]
@@ -171,16 +187,17 @@ def progress_chain(inp):
             step_times['Accepted (ns)'] += step_end
             probs['Accepted'][str(P)] += 1
         else:
-            step_times['Rejected (ns)'] += step_end
+            if P == -2:
+               step_times['OOS (ns)'] += step_end
+            else:
+                step_times['Rejected (ns)'] += step_end
             probs['Rejected'][str(P)] += 1
         last_r += delta_r
         swaps += 1
 
         if counter % increment == 0:
-            times[str(swaps)] = elapsed
+            times.append([swaps, elapsed])
             assortativities.append(last_r)
-            p_score = ut.compute_perturbation_score(sampler.A, last_A)
-            perturbations.append(p_score)
         
         counter += 1
                     
@@ -190,9 +207,9 @@ def progress_chain(inp):
     all_stats['Number of Swaps'] = num_swaps_needed
     all_stats['Num Edges'] = sampler.m
     all_stats['Chain'] = idx
-    all_stats['Time at Iter (ns)'] = times
     all_stats['Total Time Accepted (ns)'] = step_times['Accepted (ns)']
     all_stats['Total Time Rejected (ns)'] = step_times['Rejected (ns)']
+    all_stats['Total Time OOS (ns)'] = step_times.get('OOS (ns)', 0)
     all_stats['Method'] = sampler_name
 
-    return assortativities, perturbations, probs, all_stats
+    return assortativities, times, probs, all_stats

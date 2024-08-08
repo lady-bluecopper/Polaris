@@ -1,43 +1,45 @@
-import networkx as nx
 import sys
-import orjson
+import json
 import os
 from tqdm.contrib.concurrent import process_map
 sys.path.insert(1,'../')
 import src.loaders as ld # type: ignore
+import src.utils as ut # type: ignore
 import src.ConfigModel_MCMC as mcmc # type: ignore
 import src.MCMC_LA as la # type: ignore
 import src.MCMC_LW as lw # type: ignore
 import src.CM as cm # type: ignore
 
 
-def save_data(ass, pert, prob, stats, out_dir, out_base):
+def save_data(ass_lst, time_lst, prob, stats, out_dir, out_base):
     # array of arrays
     print('Saving Assortativity')
-    with open(f'{out_dir}/assortativities__{out_base}', 'wb') as out_f:
-        # Chain Assortativity List
-        for idx, data in enumerate(ass):
-            out_f.write(orjson.dumps({str(idx): data}) + b'\n')
-    del ass
+    with open(f'{out_dir}/assortativities__{out_base}', 'w') as out_f:
+        # Chain Assortativity
+        for idx, data in enumerate(ass_lst):
+            for a in data:
+                out_f.write(f'{idx}\t{a}\n')
+    del ass_lst
     # array of arrays
-    print('Saving Perturbations')
-    with open(f'{out_dir}/perturbations__{out_base}', 'wb') as out_f:
-        # Chain Perturbation List
-        for idx, data in enumerate(pert):
-            out_f.write(orjson.dumps({str(idx): data}) + b'\n')
-    del pert
+    print('Saving Times at Iter')
+    with open(f'{out_dir}/itertimes__{out_base}', 'w') as out_f:
+        # Chain Iteration Time
+        for idx, data in enumerate(time_lst):
+            for it, t in data:
+                out_f.write(f'{idx}\t{it}\t{t}\n')
+    del time_lst
     # array of dicts
     print('Saving Acceptance Probs')
-    with open(f'{out_dir}/acceptance__{out_base}', 'wb') as out_f:
+    with open(f'{out_dir}/acceptance__{out_base}', 'w') as out_f:
         # 'Chain Probability Count'
         for idx, ps_dict in enumerate(prob):
-            out_f.write(orjson.dumps({str(idx): ps_dict}) + b'\n')
+            out_f.write(json.dumps({str(idx): ps_dict}) + '\n')
     del prob
     # array of dicts
     print('Saving STATS')
-    with open(f'{out_dir}/stats__{out_base}', 'wb') as out_f:
+    with open(f'{out_dir}/stats__{out_base}', 'w') as out_f:
         for stats_dict in stats:
-            out_f.write(orjson.dumps(stats_dict) + b'\n')
+            out_f.write(json.dumps(stats_dict) + '\n')
     del stats
 
 
@@ -95,10 +97,10 @@ def run_convergence(edges: list[tuple[int,int]],
         outputs = process_map(mcmc.progress_chain, inputs, max_workers=max_workers)
         
         ass_list = [[r_burn_in] + outputs[i][0] for i in range(D)]
-        pert_list = [outputs[i][1] for i in range(D)]
+        time_list = [outputs[i][1] for i in range(D)]
         prob_list = [outputs[i][2] for i in range(D)]
         stats_dict = [outputs[i][3] for i in range(D)]
-        return ass_list, pert_list, prob_list, stats_dict
+        return ass_list, time_list, prob_list, stats_dict
     
 
 if __name__ == '__main__':
@@ -120,14 +122,12 @@ if __name__ == '__main__':
     
     file_path = f'{data_dir}/{graph_name}.tsv'
     edges = ld.read_tsv_graph(file_path)
-    G = nx.MultiGraph()
-    G.add_edges_from(edges)
-    degrees = dict(G.degree()) # type: ignore
+    degrees = ut.compute_degree_sequence_from_list(edges)
     
     lab_path = f'{data_dir}/{graph_name}_labels.tsv'
-    node_labels, inner_outer_labels = ld.read_node_labels(lab_path, G.nodes())
+    node_labels, inner_outer_labels = ld.read_node_labels(lab_path, degrees.keys())
 
-    ass_lists, pert_lists, prob_lists, stats_dicts = run_convergence(edges=edges,
+    ass_lists, time_lists, prob_lists, stats_dicts = run_convergence(edges=edges,
                                                                      degrees=degrees,  # type: ignore
                                                                      node_labels=node_labels,
                                                                      perc=perc, 
@@ -138,4 +138,4 @@ if __name__ == '__main__':
                                                                      seed=base_seed)
     # save data
     out_base = f'{graph_name}__method_{sampl_name}__mul_fact_{mul_fact}__D_{D}__perc_{perc}__seed_{base_seed}'
-    save_data(ass_lists, pert_lists, prob_lists, stats_dicts, out_dir, out_base)
+    save_data(ass_lists, time_lists, prob_lists, stats_dicts, out_dir, out_base)
