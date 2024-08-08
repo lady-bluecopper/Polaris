@@ -90,7 +90,7 @@ The filename includes the following information:
 6. value of the *actual* parameter.
 
 The convergence experiment writes four output files:
-1. *assortativities*: degree assortativity values of the states visited in each Markov chain. Values are stored every *perc |E|* iterations.
-2. *perturbations*: Manhattan distance between the original edge weight matrix and the edge weight matrices of the states visited in each Markov chain. Values are stored every *perc |E|* iterations.
+1. *assortativities*: degree assortativity values of the states visited in each Markov chain. Values are stored every *perc |E|* iterations (every iteration if *perc = 0*).
+2. *itertimes*: elapsed time for each Markov chain every *perc |E|* iterations (every iteration if *perc = 0*).
 3. *acceptance*: transition probabilities of accepted and rejected transitions to the next state.
 4. *stats*: various statistics such as elapsed time, acceptance ratio, number of iterations, ID of the Markov chain, total time spent in an iteration where the transition was accepted, total time spent in an iteration where the transition was rejected, number of edges, and sampler name.
