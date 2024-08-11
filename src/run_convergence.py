@@ -17,8 +17,8 @@ def save_data(ass_lst, time_lst, prob, stats, out_dir, out_base):
     with open(f'{out_dir}/assortativities__{out_base}', 'w') as out_f:
         # Chain Assortativity
         for idx, data in enumerate(ass_lst):
-            for a in data:
-                out_f.write(f'{idx}\t{a}\n')
+            for it, a in data:
+                out_f.write(f'{idx}\t{it}\t{a}\n')
     del ass_lst
     # array of arrays
     print('Saving Times at Iter')
@@ -34,13 +34,12 @@ def save_data(ass_lst, time_lst, prob, stats, out_dir, out_base):
         # 'Chain Probability Count'
         for idx, ps_dict in enumerate(prob):
             out_f.write(json.dumps({str(idx): ps_dict}) + '\n')
-    del prob
     # array of dicts
     print('Saving STATS')
     with open(f'{out_dir}/stats__{out_base}', 'w') as out_f:
         for stats_dict in stats:
             out_f.write(json.dumps(stats_dict) + '\n')
-    del stats
+    print('Finished.')
 
 
 def run_convergence(edges: list[tuple[int,int]], 
@@ -96,7 +95,7 @@ def run_convergence(edges: list[tuple[int,int]],
         
         outputs = process_map(mcmc.progress_chain, inputs, max_workers=max_workers)
         
-        ass_list = [[r_burn_in] + outputs[i][0] for i in range(D)]
+        ass_list = [[[0, r_burn_in]] + outputs[i][0] for i in range(D)]
         time_list = [outputs[i][1] for i in range(D)]
         prob_list = [outputs[i][2] for i in range(D)]
         stats_dict = [outputs[i][3] for i in range(D)]

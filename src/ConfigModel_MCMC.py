@@ -109,7 +109,6 @@ def sample_graph(inp):
         if P != -2:
             it += 1
     end = time.time() - start
-
     # SANITY CHECK        
     # deg_seq_g = ut.compute_degree_sequence_from_A(sampler.A)
     # jlm_g1 = ut.compute_JLM_from_A(sampler.A, sampler.node_labels)
@@ -174,7 +173,6 @@ def progress_chain(inp):
         P = sampler.MCMC_step(last_A, last_edge_list, swapped)
         step_end = time.time_ns() - step_start
         elapsed += step_end
-        delta_r = 0
         # A swap was performed
         if swapped[0] != -1:
             actual_moves += 1
@@ -186,19 +184,19 @@ def progress_chain(inp):
             swapped[0] = -1
             step_times['Accepted (ns)'] += step_end
             probs['Accepted'][str(P)] += 1
+            last_r += delta_r
+            swaps += 1
         else:
             if P == -2:
                step_times['OOS (ns)'] += step_end
             else:
                 step_times['Rejected (ns)'] += step_end
+                swaps += 1
             probs['Rejected'][str(P)] += 1
-        last_r += delta_r
-        swaps += 1
 
         if counter % increment == 0:
             times.append([swaps, elapsed])
-            assortativities.append(last_r)
-        
+            assortativities.append([swaps, last_r])
         counter += 1
                     
     all_stats = dict()
