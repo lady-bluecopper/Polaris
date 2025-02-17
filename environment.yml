@@ -128,7 +128,6 @@ dependencies:
       - notebook==7.2.1
       - notebook-shim==0.2.4
       - numpy==2.0.0
-      - orderedstructs==0.3.13
       - orjson==3.10.6
       - overrides==7.7.0
       - packaging==24.1
